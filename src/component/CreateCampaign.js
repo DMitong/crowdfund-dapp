@@ -23,31 +23,31 @@ const CreateCampaign = () => {
         setIsOpen(true);
     }
 
-    const handleProposeCampaign = async () => {
-        if (!title || !goal || !duration)
-            return alert("Please provide all valeus");
-        if (!isActive) return alert("please, connect");
-        try {
-            setSendingTx(true);
-            const tx = await proposeCampaign(
-                title,
-                parseEther(String(goal)),
-                duration * 60
-            );
-            const receipt = await tx.wait();
-            if (receipt.status === 0) return alert("tx failed");
+const handleProposeCampaign = async () => {
+  if (!title || !goal || !duration) return alert("Please provide all values");
+  if (!isActive) return alert("Please connect");
 
-            alert("campaign created!!");
-        } catch (error) {
-            console.log("error: ", error);
-            if (error.info.error.code === 4001) {
-                return alert("You rejected the request");
-            }
-            alert("something went wrong");
-        } finally {
-            setSendingTx(false);
-        }
-    };
+  try {
+    setSendingTx(true);
+
+    const tx = await proposeCampaign(title, parseEther(String(goal)), duration * 60);
+    const receipt = await tx.wait();
+
+    if (receipt.status === 0) return alert("Transaction failed");
+    alert("Campaign created!!");
+
+    closeModal();
+  } catch (error) {
+    console.log("Error: ", error);
+    if (error.info.error.code === 4001) {
+      return alert("You rejected the request");
+    }
+    alert("Something went wrong");
+  } finally {
+    setSendingTx(false);
+  }
+};
+
     return (
         <Fragment>
             <button
