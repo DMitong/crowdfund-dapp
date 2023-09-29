@@ -1,37 +1,47 @@
-import { useState, useEffect } from 'react';
-import abi from '../utils/abi.json';
-import { useConnection } from '../context/connection';
-import { ethers } from 'ethers';
+import { useEffect, useState } from "react";
+import useCampaignCount from "./useCampaignCount";
+import { useConnection } from "../context/connection";
+import { getCrowdfundContract } from "../utils";
 
-const useCampaign = () => {
-  const { provider, isActive } = useConnection();
-  const [campaigns, setCampaigns] = useState([]);
+const useCampaign = (id) => {
+    const [campaign, setCampaign] = useState(null);
+    const [state, setState] = useState("LOADING");
+    const { provider } = useConnection();
+    const campaignLength = useCampaignCount();
 
-  const contractAddress = '0x46f44F2D1af04D54ab5BCbEF9F4D0Df9baDc1B8C';
+    useEffect(() => {
+        const fetchCampaign = async () => {
+            const campaignId = Number(id);
+            if (!campaignLength) return;
+            if (!campaignId || campaignId > campaignLength)
+                return setState("NOT_FOUND");
+            try {
+                const contract = await getCrowdfundContract(provider, false);
 
-  useEffect(() => {
-    if (!isActive || !provider) return;
-    const fetchData = async () => {
-      const contract = new ethers.Contract(contractAddress, abi, provider);
-      try {
-        const campaignIds = await contract.id();
-        const allCampaigns = [];
-        for (let i = 1; i <= campaignIds; i++) {
-          const campaign = contract.crowd(i);
-          allCampaigns.push(campaign);
-        }
+                const campaignStruct = await contract.crowd(campaignId);
 
-        const campaignInfo = await Promise.all(allCampaigns);
-        setCampaigns(campaignInfo);
-      } catch (error) {
-        console.log(error);
-      }
-    };
+                const campaignDetails = {
+                    id: campaignId,
+                    title: campaignStruct.title,
+                    fundingGoal: campaignStruct.fundingGoal,
+                    owner: campaignStruct.owner,
+                    durationTime: Number(campaignStruct.durationTime),
+                    isActive: campaignStruct.isActive,
+                    fundingBalance: campaignStruct.fundingBalance,
+                    contributors: campaignStruct.contributors,
+                };
 
-    fetchData();
-  }, [provider, isActive]);
+                setCampaign(campaignDetails);
+                setState("LOADED");
+            } catch (error) {
+                console.error("Error fetching campaigns:", error);
+                setState("NOT_FOUND");
+            }
+        };
 
-  return campaigns;
+        fetchCampaign();
+    }, [campaignLength, id, provider]);
+    return { campaign, state };
 };
 
 export default useCampaign;
