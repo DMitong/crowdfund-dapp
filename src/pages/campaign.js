@@ -115,6 +115,16 @@ const Campaign = () => {
                                 Funding Goal -{" "}
                                 {formatEther(campaign?.fundingGoal)} ETH
                             </p>
+                            <div className="mt-2 font-bold text-gray-500">
+                                Contributors:
+                                <ul>
+                                {campaign?.contributors.map((contributor, index) => (
+                                <li key={index}>
+                                {contributor.address} - {formatEther(contributor.amount)} ETH
+                                </li>
+                                ))}
+                                </ul>
+                            </div>
                         </div>
                     </div>
                 </div>
